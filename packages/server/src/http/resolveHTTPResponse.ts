@@ -17,6 +17,7 @@ import {
   HTTPHeaders,
   HTTPRequest,
   HTTPResponse,
+  ResponseMetaFnPayloadPaths,
 } from './internals/types';
 
 const HTTP_METHOD_PROCEDURE_TYPE_MAP: Record<
@@ -70,7 +71,8 @@ export async function resolveHTTPResponse<
   const type =
     HTTP_METHOD_PROCEDURE_TYPE_MAP[req.method] ?? ('unknown' as const);
   let ctx: inferRouterContext<TRouter> | undefined = undefined;
-  let paths: string[] | undefined = undefined;
+  let paths: ResponseMetaFnPayloadPaths<TRouter, typeof type> | undefined =
+    undefined;
 
   const isBatchCall = !!req.query.get('batch');
   type TRouterError = inferRouterError<TRouter>;

@@ -26,16 +26,43 @@ export interface HTTPRequest {
   body: unknown;
 }
 
-export type ResponseMetaFn<TRouter extends AnyRouter> = (opts: {
+export type InferPathForType<
+  TRouter extends AnyRouter,
+  TType extends ProcedureType | 'unknown',
+> = TType extends 'query'
+  ? keyof TRouter['_def']['queries']
+  : TType extends 'mutation'
+  ? keyof TRouter['_def']['mutations']
+  : TType extends 'subscription'
+  ? keyof TRouter['_def']['subscriptions']
+  : string;
+
+export type ResponseMetaFnPayloadPaths<
+  TRouter extends AnyRouter,
+  TType extends ProcedureType | 'unknown',
+> = TType extends ProcedureType | 'unknown'
+  ? InferPathForType<TRouter, TType> extends never
+    ? never
+    : InferPathForType<TRouter, TType>[]
+  : never;
+
+export type ResponseMetaFnPayload<
+  TRouter extends AnyRouter,
+  TType extends ProcedureType | 'unknown' = ProcedureType | 'unknown',
+> = {
   data: TRPCResponse<unknown, inferRouterError<TRouter>>[];
   ctx?: inferRouterContext<TRouter>;
-  /**
-   * The different tRPC paths requested
-   **/
-  paths?: string[];
-  type: ProcedureType | 'unknown';
   errors: TRPCError[];
-}) => ResponseMeta;
+  type: TType;
+  paths?: ResponseMetaFnPayloadPaths<TRouter, TType>;
+};
+
+export type ResponseMetaFn<
+  TRouter extends AnyRouter,
+  TType extends ProcedureType | 'unknown' = ProcedureType | 'unknown',
+> = (
+  opts: TType extends any ? ResponseMetaFnPayload<TRouter, TType> : never,
+) => ResponseMeta;
 
 /**
  * Base interface for anything using HTTP
